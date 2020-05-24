@@ -1,1 +1,1 @@
-from models.MRnet import MRnet
+from .MRnet import MRnet

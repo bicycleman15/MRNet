@@ -25,12 +25,12 @@ class MRData():
 
         self.records = None
         if train:
-            self.records = pd.read_csv('./images/train-{}.csv'.format(task))
-            self.image_path = './images/train/{}/'.format(task)
+            self.records = pd.read_csv('./images/train-{}.csv'.format(task),header=None, names=['id', 'label'])
+            self.image_path = './images/train/{}/'.format(plane)
         else:
             transform = None
-            self.records = pd.read_csv('./images/valid-{}.csv'.format(task))
-            self.image_path = './images/valid/{}/'.format(task)
+            self.records = pd.read_csv('./images/valid-{}.csv'.format(task),header=None, names=['id', 'label'])
+            self.image_path = './images/valid/{}/'.format(plane)
 
         
         self.transform = transform 
@@ -38,7 +38,7 @@ class MRData():
         self.records['id'] = self.records['id'].map(
             lambda i: '0' * (4 - len(str(i))) + str(i))
             
-        self.paths = [self.image_path +
+        self.paths = [self.image_path + filename +
                       '.npy' for filename in self.records['id'].tolist()]
 
         self.labels = self.records['label'].tolist()
@@ -55,9 +55,9 @@ class MRData():
         img_raw = np.load(self.paths[index])
         label = self.labels[index]
         if label == 1:
-            label = torch.FloatTensor([[0, 1]])
+            label = torch.FloatTensor([1])
         elif label == 0:
-            label = torch.FloatTensor([[1, 0]])
+            label = torch.FloatTensor([0])
 
         # apply transforms if possible, or else stack 3 images together
         # Note : if applying any transformation, use 3 to generate 3 images
