@@ -15,16 +15,15 @@ class MRnet(nn.Module):
         resnet_modules = list(backbone.children())
 
         # get the last conv layer of resnet
-        self.body = nn.Sequential(*resnet_modules[:-2])
+        self.body = nn.Sequential(*resnet_modules[:-1])
 
         # make body non-trainable
         self._set_grads()
 
         self.fc = nn.Sequential(
-            nn.Linear(in_features=2048*7*7,out_features=1024),
+            nn.Linear(in_features=2048,out_features=1024),
             nn.ReLU(),
-            nn.Linear(in_features=1024,out_features=1),
-            nn.Sigmoid()
+            nn.Linear(in_features=1024,out_features=2),
         )
 
     def forward(self,x): # TODO : see what to do ??
@@ -34,13 +33,19 @@ class MRnet(nn.Module):
         """
 
         # squeeze the first dimension as there
-        # is only one patient in each batch
+        # is only one patient in each batch, now we have data of form
+        # (slices, 3, 224, 224) instead of initial (1 , slices,3,224,224)
         x = torch.squeeze(x, dim=0) 
 
         x = self.body(x)
-        x = x.view(-1,2048*7*7) # flatten x
+
+        # just a precautionary step
+        x = x.view(-1,2048) # flatten x
+
         x = self.fc(x)
 
+        # no need to take softmax here
+        # as cross_entropy loss combines both softmax and NLL loss
         return x
     
     def _set_grads(self):
