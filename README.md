@@ -16,9 +16,13 @@ Each MRI has data in 3 perpendicular planes. And each plane as variable number o
 Each slice is an `256x256` image
 
 For example:
+
 For `MRI 1` we will have 3 planes:
+
 Plane 1- with 35 slices
+
 Plane 2- with 34 slices
+
 Place 3 with 35 slices
 
 Each MRI has to be classisifed against 3 diseases
