@@ -10,15 +10,10 @@ class MRnet(nn.Module):
 
         super(MRnet,self).__init__()
 
-        # init resnet
-        backbone = models.resnet50(pretrained=True)
-        resnet_modules = list(backbone.children())
-
-        # get the last conv layer of resnet
-        self.body = nn.Sequential(*resnet_modules[:-1])
-
-        # make body non-trainable
-        self._set_grads()
+        # init three backbones for three axis
+        self.axial = self._generate_resnet()
+        self.coronal = self._generate_resnet()
+        self.saggital = self._generate_resnet()
 
         self.fc = nn.Sequential(
             nn.Linear(in_features=2048,out_features=1024),
@@ -27,14 +22,12 @@ class MRnet(nn.Module):
         )
 
     def forward(self,x): # TODO : see what to do ??
-        """ input should be of form `[1,slices,3,224,224]` ,
-        make sure to add 3 dimesnion to image by adding same image across
-        all three RGB.
+        """ Input is given in the form of `[1, [image1, image2, image3]]` where
+        `1` is due to the dataloader assigning it a single batch. 
         """
 
         # squeeze the first dimension as there
-        # is only one patient in each batch, now we have data of form
-        # (slices, 3, 224, 224) instead of initial (1 , slices,3,224,224)
+        # is only one patient in each batch
         x = torch.squeeze(x, dim=0) 
 
         x = self.body(x)
@@ -48,13 +41,21 @@ class MRnet(nn.Module):
         # as cross_entropy loss combines both softmax and NLL loss
         return x
     
-    def _set_grads(self):
+    def _generate_resnet(self):
         """make all resnet params non-trainable, called automatically
-        in `__init__`
+        in `__init__` and then generate a Resnet50 model to be used as a backbone
         """
+        # init resnet
+        backbone = models.resnet50(pretrained=True)
+        resnet_modules = list(backbone.children())
+
+        # remove last layer of resnet
+        body = nn.Sequential(*resnet_modules[:-1])
         
-        for x in self.body.parameters():
+        for x in body.parameters():
             x.requires_grad = False
+
+        return body
 
     def _load_wieghts(self):
         """load pretrained weights"""
