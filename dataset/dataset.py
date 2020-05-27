@@ -78,7 +78,10 @@ class MRData():
             # print(img_raw[plane].shape)
             new=[]
             for i in range(img_raw[plane].shape[0]):
-                new.append(cv2.resize(img_raw[plane][i],(224,224), interpolation=cv2.INTER_AREA))
+                intermediate=cv2.resize(img_raw[plane][i],(224,224), interpolation=cv2.INTER_AREA)
+                intermediate2=np.zeros((224,224))
+                intermediate2=cv2.normalize(intermediate, None, alpha=0, beta=1, norm_type=cv2.NORM_MINMAX, dtype=cv2.CV_32F)
+                new.append(intermediate2)
             
             img_raw[plane]=np.array(new)
                 
