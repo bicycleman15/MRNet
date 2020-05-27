@@ -75,10 +75,15 @@ class MRData():
         
         for plane in self.planes:
             img_raw[plane] = np.load(self.paths[plane][index])
-            # print(img_raw[plane].shape)
-            new=[]
+
+            # array to collect new resized images
+            new = []
+            
             for i in range(img_raw[plane].shape[0]):
-                new.append(cv2.resize(img_raw[plane][i],(224,224), interpolation=cv2.INTER_AREA))
+                inter = cv2.resize(img_raw[plane][i],(224,224), interpolation=cv2.INTER_AREA)
+                inter_ = np.zeros((224,224))
+                inter_ = cv2.normalize(inter, None, alpha=0, beta=1, norm_type=cv2.NORM_MINMAX, dtype=cv2.CV_32F)
+                new.append(inter_)
             
             img_raw[plane]=np.array(new)   
             

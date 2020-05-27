@@ -12,6 +12,8 @@ Input params:
     config_file: Takes in configurations to train with 
 """
 
+# TODO : Add proper checks for gpu
+
 def train(config : dict, export=True):
     """
     Function where actual training takes place
@@ -37,10 +39,12 @@ def train(config : dict, export=True):
 
     print('Initializing Model...')
     model = MRnet()
+    model.cuda()
 
     print('Initializing Loss Method...')
     # TODO : maybe take a wiegthed loss
     criterion = torch.nn.CrossEntropyLoss()
+    criterion.cuda()
 
     print('Setup the Optimizer')
     # TODO : Add other hyperparams as well
@@ -73,6 +77,9 @@ def train(config : dict, export=True):
 
             images, label = batch
 
+            images = [x.cuda() for x in images]
+            label = label.cuda()
+
             # TODO: Add some visualiser maybe
 
             output = model(images)
@@ -95,7 +102,7 @@ def train(config : dict, export=True):
             optimizer.zero_grad()
 
             # Log some info, TODO : add some graphs after some interval
-            if num_batch % config['log_freq']:
+            if num_batch % config['log_freq'] == 0:
                 print('{}/{} Epoch : {}/{} Batch Iter : Batch Loss {}'.format(
                     epoch, num_epochs, num_batch, len(train_loader), loss.item()
                 ))
@@ -106,6 +113,7 @@ def train(config : dict, export=True):
         # Calc validation results    
         # Print details about end of epoch
         validation_loss, accuracy = _run_eval(model, val_loader, criterion)
+        
 
         # TODO : Print details about end of epoch
         # Accuracy, Train Loss, Val Loss, Learning Rate

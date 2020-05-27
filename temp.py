@@ -23,10 +23,14 @@ criterion = torch.nn.CrossEntropyLoss()
 # print(train_loader[0])
 
 for x,y in train_loader:
-    print(x[0].shape)
-    print(y.shape)
+#     print(x[0])
+#     print(y.shape)
     output = net(x)
+
     print(output)
-    loss = criterion(output,y)
-    print(loss)
+    print(torch.argmax(output).item())
+    print(y[0].item())
+#     print(output)
+#     loss = criterion(output,y)
+#     print(loss)
     break

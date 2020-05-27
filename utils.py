@@ -17,24 +17,36 @@ def _run_eval(model, validation_loader, criterion):
     correct_cases = 0
     validation_loss = 0.0
 
+    i = 0
     for images, label in validation_loader:
 
-        with torch.no_grad:
+        images = [x.cuda() for x in images]
+        label = label.cuda()
+
+        with torch.no_grad():
             output = model.forward(images)
 
             # Calc loss
             loss = criterion(output, label)
 
             # TODO : label in form of [[1,0]] whereas output in [0.96,0.04], dimension do not match
-            if torch.argmax(output) == torch.argmax(label):
+            if torch.argmax(output).item() == label[0].item():
+                # print('Correct !!')
                 correct_cases += 1
             
             validation_loss += loss.item()
+            
+            print('Validation Loss is {} at iter {}/{}'.format(loss.item(), i, len(validation_loader)))
+            
+        
+        i += 1
 
     # Calculate accuracy
     accuracy = float(correct_cases) / len(validation_loader)
 
     # Calculate Loss per patient
     average_val_loss = validation_loss / len(validation_loader)
+
+    print('Accuracy is {}'.format(accuracy))
 
     return average_val_loss, accuracy
