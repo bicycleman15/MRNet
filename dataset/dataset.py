@@ -7,6 +7,7 @@ import torch.nn.functional as F
 import torchvision.transforms.functional as TF
 import torch.utils.data as data
 from torchvision import transforms
+import cv2
 
 class MRData():
     """This class used to load MRnet dataset from `./images` dir
@@ -74,8 +75,20 @@ class MRData():
         
         for plane in self.planes:
             img_raw[plane] = np.load(self.paths[plane][index])
+            # print(img_raw[plane].shape)
+            new=[]
+            for i in range(img_raw[plane].shape[0]):
+                new.append(cv2.resize(img_raw[plane][i],(224,224), interpolation=cv2.INTER_AREA))
+            
+            img_raw[plane]=np.array(new)
+                
+            
         label = self.labels[index]
-        label=torch.FloatTensor([label])
+        if(label==1):
+            label=torch.FloatTensor([0,1])
+        else:
+            label=torch.FloatTensor([1,0])
+
 
         # apply transforms if possible, or else stack 3 images together
         # Note : if applying any transformation, use 3 to generate 3 images
@@ -87,7 +100,7 @@ class MRData():
                 img_raw[plane] = np.stack((img_raw[plane],)*3, axis=1)
                 img_raw[plane] = torch.FloatTensor(img_raw[plane])
 
-        return [img_raw[plane] for plane in self.planes ], [label]*3
+        return [img_raw[plane] for plane in self.planes ], label
 
     def pre_epoch_callback(self, epoch):
         """Callback to be called before every epoch.
