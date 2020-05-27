@@ -12,7 +12,7 @@ class MRData():
     """This class used to load MRnet dataset from `./images` dir
     """
 
-    def __init__(self, plane, task = 'acl', train = True, transform = None, weights = None):
+    def __init__(self,task = 'acl', train = True, transform = None, weights = None):
         """Initialize the dataset
 
         Args :
@@ -22,24 +22,40 @@ class MRData():
             transform : which transforms to apply
 
         """
-
+        self.planes=["axial","coronal","sagittal"]
         self.records = None
+        # an empty dictionary
+        self.image_path={}
+        
         if train:
             self.records = pd.read_csv('./images/train-{}.csv'.format(task),header=None, names=['id', 'label'])
-            self.image_path = './images/train/{}/'.format(plane)
+
+            '''
+            self.image_path[<plane>]= dictionary {<plane>: path to folder containing
+                                                                image for that plane}
+            '''
+            for plane in self.planes:
+                self.image_path[plane] = './images/train/{}/'.format(plane)
         else:
             transform = None
             self.records = pd.read_csv('./images/valid-{}.csv'.format(task),header=None, names=['id', 'label'])
-            self.image_path = './images/valid/{}/'.format(plane)
+            '''
+            self.image_path[<plane>]= dictionary {<plane>: path to folder containing
+                                                                image for that plane}
+            '''
+            for plane in self.planes:
+                self.image_path[plane] = './images/valid/{}/'.format(plane)
 
         
         self.transform = transform 
 
         self.records['id'] = self.records['id'].map(
             lambda i: '0' * (4 - len(str(i))) + str(i))
-            
-        self.paths = [self.image_path + filename +
-                      '.npy' for filename in self.records['id'].tolist()]
+        # empty dictionary
+        self.paths={}    
+        for plane in self.planes:
+            self.paths[plane] = [self.image_path[plane] + filename +
+                          '.npy' for filename in self.records['id'].tolist()]
 
         self.labels = self.records['label'].tolist()
         
@@ -50,25 +66,28 @@ class MRData():
 
     def __getitem__(self, index):
         """
-        Returns `(image,label)` pair
+        Returns `(images,labels)` pair
+        where image is a list [imgsPlane1,imgsPlane2,imgsPlane3]
+        and labels is a list [gt,gt,gt]
         """
-        img_raw = np.load(self.paths[index])
+        img_raw={}
+        
+        for plane in self.planes:
+            img_raw[plane] = np.load(self.paths[plane][index])
         label = self.labels[index]
-        if label == 1:
-            label = torch.FloatTensor([1])
-        elif label == 0:
-            label = torch.FloatTensor([0])
+        label=torch.FloatTensor([label])
 
         # apply transforms if possible, or else stack 3 images together
         # Note : if applying any transformation, use 3 to generate 3 images
         # but they should be almost similar to each other
-        if self.transform:
-            img_raw = self.transform(img_raw)
-        else:
-            img_raw = np.stack((img_raw,)*3, axis=1)
-            img_raw = torch.FloatTensor(img_raw)
+        for plane in self.planes:
+            if self.transform:
+                img_raw[plane] = self.transform(img_raw[plane])
+            else:
+                img_raw[plane] = np.stack((img_raw[plane],)*3, axis=1)
+                img_raw[plane] = torch.FloatTensor(img_raw[plane])
 
-        return img_raw, label
+        return [img_raw[plane] for plane in self.planes ], [label]*3
 
     def pre_epoch_callback(self, epoch):
         """Callback to be called before every epoch.
