@@ -11,6 +11,14 @@ Input params:
 """
 
 def train(config : dict, export=True):
+    """
+    Function where actual training takes place
+
+    Args:
+        config (dict) : Configuration to train with
+        export (Boolean) : Whether to export model to disk or not
+    """
+    
     print('Starting to Train Model...')
 
     print('Loading Train Dataset...')
@@ -89,12 +97,11 @@ def train(config : dict, export=True):
                 ))
 
             num_batch += 1
-        
-        # Set to eval mode
-        model.eval()
-        
+
+
+        # Calc validation results    
         # Print details about end of epoch
-        validation_loss, accuracy = _run_eval(model, val_loader)
+        validation_loss, accuracy = _run_eval(model, val_loader, criterion)
 
         # TODO : Print details about end of epoch
         # Accuracy, Train Loss, Val Loss, Learning Rate
