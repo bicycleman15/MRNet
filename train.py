@@ -2,7 +2,7 @@ from dataset import MRData
 from models import MRnet
 from config import config
 import torch
-from utils import _get_trainable_params
+from utils import _get_trainable_params, _run_eval
 
 """Performs training of a specified model.
     
