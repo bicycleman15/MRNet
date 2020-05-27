@@ -10,46 +10,59 @@ class MRnet(nn.Module):
 
         super(MRnet,self).__init__()
 
-        # init resnet
-        backbone = models.resnet50(pretrained=True)
-        resnet_modules = list(backbone.children())
-
-        # get the last conv layer of resnet
-        self.body = nn.Sequential(*resnet_modules[:-2])
-
-        # make body non-trainable
-        self._set_grads()
+        # init three backbones for three axis
+        self.axial = self._generate_resnet()
+        self.coronal = self._generate_resnet()
+        self.saggital = self._generate_resnet()
 
         self.fc = nn.Sequential(
-            nn.Linear(in_features=2048*7*7,out_features=1024),
+            nn.Linear(in_features=3*2048,out_features=1024),
             nn.ReLU(),
-            nn.Linear(in_features=1024,out_features=1),
-            nn.Sigmoid()
+            nn.Linear(in_features=1024,out_features=2),
         )
 
     def forward(self,x): # TODO : see what to do ??
-        """ input should be of form `[1,slices,3,224,224]` ,
-        make sure to add 3 dimesnion to image by adding same image across
-        all three RGB.
+        """ Input is given in the form of `[image1, image2, image3]` where
+        `image1 = [1, slices, 3, 224, 224]`. Note that `1` is due to the 
+        dataloader assigning it a single batch. 
         """
 
         # squeeze the first dimension as there
         # is only one patient in each batch
-        x = torch.squeeze(x, dim=0) 
+        images = [torch.squeeze(img, dim=0) for img in x]
 
-        x = self.body(x)
-        x = x.view(-1,2048*7*7) # flatten x
-        x = self.fc(x)
+        image1 = self.axial(images[0]).view(-1,2048)
+        image2 = self.coronal(images[1]).view(-1,2048)
+        image3 = self.saggital(images[2]).view(-1,2048)
 
-        return x
+        image1 = torch.max(image1,dim=0,keepdim=True)[0].squeeze(dim=0)
+        image2 = torch.max(image2,dim=0,keepdim=True)[0].squeeze(dim=0)
+        image3 = torch.max(image3,dim=0,keepdim=True)[0].squeeze(dim=0)
+
+        output = torch.cat([image1,image2,image3])
+
+        output = self.fc(output)
+
+        # # no need to take softmax here
+        # # as cross_entropy loss combines both softmax and NLL loss
+        return output
     
-    def _set_grads(self):
+    def _generate_resnet(self):
         """make all resnet params non-trainable, called automatically
-        in `__init__`
+        in `__init__` and then generate a Resnet50 model to be used as a backbone
         """
+        # init resnet
+        backbone = models.resnet50(pretrained=True)
+        resnet_modules = list(backbone.children())
+
+        # remove last layer of resnet
+        body = nn.Sequential(*resnet_modules[:-1])
         
-        for x in self.body.parameters():
+        # make params non trainable
+        for x in body.parameters():
             x.requires_grad = False
+
+        return body
 
     def _load_wieghts(self):
         """load pretrained weights"""
