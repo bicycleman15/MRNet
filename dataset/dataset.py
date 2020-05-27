@@ -80,16 +80,10 @@ class MRData():
             for i in range(img_raw[plane].shape[0]):
                 new.append(cv2.resize(img_raw[plane][i],(224,224), interpolation=cv2.INTER_AREA))
             
-            img_raw[plane]=np.array(new)
-                
+            img_raw[plane]=np.array(new)   
             
         label = self.labels[index]
-        if(label==1):
-            label=torch.FloatTensor([0,1])
-        else:
-            label=torch.FloatTensor([1,0])
-
-
+        
         # apply transforms if possible, or else stack 3 images together
         # Note : if applying any transformation, use 3 to generate 3 images
         # but they should be almost similar to each other

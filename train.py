@@ -3,6 +3,8 @@ from models import MRnet
 from config import config
 import torch
 from utils import _get_trainable_params, _run_eval
+import time
+import torch.utils.data as data
 
 """Performs training of a specified model.
     
@@ -24,13 +26,13 @@ def train(config : dict, export=True):
     print('Loading Train Dataset...')
     train_data = MRData(task='acl',train=True)
     train_loader = data.DataLoader(
-        train_data, batch_size=1, num_workers=1, shuffle=True
+        train_data, batch_size=1, num_workers=4, shuffle=True
     )
 
     print('Loading Validation Dataset...')
     val_data = MRData(task='acl',train=True)
     val_loader = data.DataLoader(
-        val_data, batch_size=1, num_workers=1, shuffle=False
+        val_data, batch_size=1, num_workers=4, shuffle=False
     )
 
     print('Initializing Model...')
@@ -42,19 +44,21 @@ def train(config : dict, export=True):
 
     print('Setup the Optimizer')
     # TODO : Add other hyperparams as well
-    optimizer = optim.Adam(_get_trainable_params(model), lr=config['lr'])
+    optimizer = torch.optim.Adam(_get_trainable_params(model), lr=config['lr'])
 
     starting_epoch = config['starting_epoch']
     num_epochs = config['max_epoch']
 
     best_accuracy = 0.0
 
+    print('Starting Training')
+
     # TODO : add tqdm with support with notebook
     for epoch in range(starting_epoch, num_epochs):
 
         epoch_start_time = time.time()  # timer for entire epoch
 
-        train_iterations = len(train_dataset)
+        train_iterations = len(train_loader)
         train_batch_size = config['batch_size']
 
         num_batch = 0
@@ -71,7 +75,7 @@ def train(config : dict, export=True):
 
             # TODO: Add some visualiser maybe
 
-            output = model.forward(images)
+            output = model(images)
 
             # Calculate Loss cross Entropy
             loss = criterion(output, label)
@@ -126,7 +130,7 @@ if __name__ == '__main__':
     print('Training Configuration')
     print(config)
 
-    train()
+    train(config=config)
 
     print('Training Ended...')
 

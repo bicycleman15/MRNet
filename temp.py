@@ -4,27 +4,29 @@ import torch
 from models import MRnet
 from dataset import MRData
 
-# print("Loading Data...")
-# data_train = MRData(plane='axial',task='acl')
+import tqdm
 
-# train_loader = torch.utils.data.DataLoader(
-#         data_train, batch_size=1, shuffle=True, num_workers=11, drop_last=False)
+print("Loading Data...")
+data_train = MRData(task='acl')
 
-# for x,y in train_loader:
-#     print(x[1].shape)
-#     print(y.shape)
-#     break
+train_loader = torch.utils.data.DataLoader(
+        data_train, batch_size=1, shuffle=True, num_workers=11, drop_last=False)
+
 
 # image,label = data_train[0]
 
 print("Loading Model...")
 net = MRnet()
 
-# print(net)
+criterion = torch.nn.CrossEntropyLoss()
 
-image = torch.rand(20,3,224,224)
-image = image.view(1,-1,3,224,224)
+# print(train_loader[0])
 
-images = [image,image,image]
-
-print(net.forward(images))
+for x,y in train_loader:
+    print(x[0].shape)
+    print(y.shape)
+    output = net(x)
+    print(output)
+    loss = criterion(output,y)
+    print(loss)
+    break
