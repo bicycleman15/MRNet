@@ -84,6 +84,7 @@ class MRData():
                 inter_ = np.zeros((224,224))
                 inter_ = cv2.normalize(inter, None, alpha=0, beta=1, norm_type=cv2.NORM_MINMAX, dtype=cv2.CV_32F)
                 new.append(inter_)
+
             
             img_raw[plane]=np.array(new)   
             
