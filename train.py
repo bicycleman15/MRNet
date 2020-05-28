@@ -32,7 +32,7 @@ def train(config : dict, export=True):
     )
 
     print('Loading Validation Dataset...')
-    val_data = MRData(task='acl',train=True)
+    val_data = MRData(task='acl',train=False)
     val_loader = data.DataLoader(
         val_data, batch_size=1, num_workers=4, shuffle=False
     )
@@ -77,7 +77,7 @@ def train(config : dict, export=True):
 
             images, label = batch
 
-            images = [x.cuda() for x in images]
+            images = [img.cuda() for img in images]
             label = label.cuda()
 
             # TODO: Add some visualiser maybe
@@ -103,34 +103,37 @@ def train(config : dict, export=True):
 
             # Log some info, TODO : add some graphs after some interval
             if num_batch % config['log_freq'] == 0:
-                print('{}/{} Epoch : {}/{} Batch Iter : Batch Loss {}'.format(
-                    epoch, num_epochs, num_batch, len(train_loader), loss.item()
+                print('{}/{} Epoch : {}/{} Batch Iter : Batch Loss {:.4f}'.format(
+                    epoch+1, num_epochs, num_batch+1, len(train_loader), loss.item()
                 ))
 
             num_batch += 1
 
 
+        # spit train loss details
+        average_train_loss = total_loss / len(train_loader)
+        print('Average Train Loss at Epoch {} : {:.4f}'.format(epoch+1, average_train_loss))
+
         # Calc validation results    
         # Print details about end of epoch
-        validation_loss, accuracy = _run_eval(model, val_loader, criterion)
-        
+        validation_loss, accuracy = _run_eval(model, val_loader, criterion, config)
 
-        # TODO : Print details about end of epoch
+        print('Average Validation Loss at Epoch {} : {:.4f}'.format(epoch+1, validation_loss))
+        print('Validation Accuracy at Epoch {} : {:.4f}'.format(epoch+1, accuracy))
+
+        # TODO : Print details about end of epoch and add it to tensorboard
         # Accuracy, Train Loss, Val Loss, Learning Rate
 
         if best_accuracy < accuracy :
-            # Save this model
-            
             best_accuracy = accuracy
+            # Save this model
+            if export:
+                model._save_model(criterion, optimizer, best_accuracy, config, epoch)
         
         # TODO : Change LR depending upon epoch, LR
 
         total_loss = 0.0
-        print('End of epoch {0} / {1} \t Time Taken: {2} sec'.format(epoch, num_epochs, time.time() - epoch_start_time))
-
-    if export:
-        print('Exporting model...')
-        # TODO : save model to disk
+        print('End of epoch {0} / {1} \t Time Taken: {2} sec'.format(epoch+1, num_epochs, time.time() - epoch_start_time))
 
 
 if __name__ == '__main__':
@@ -141,9 +144,3 @@ if __name__ == '__main__':
     train(config=config)
 
     print('Training Ended...')
-
-
-
-
-
-

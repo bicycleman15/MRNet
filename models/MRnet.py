@@ -68,8 +68,20 @@ class MRnet(nn.Module):
         """load pretrained weights"""
         pass
 
-    def _save_model(self):
+    def _save_model(self, criterion, optimizer, accuracy, config, epoch):
         """Dump the model weights to `cfg['weights']` dir"""
-        pass
+        print('Saving Best Accuracy Model with score {:.3f} at epoch {}'.format(accuracy, epoch+1))
+        
+        save_path = config['weights_path'] 
+        model_name = 'MRnet_{}_{}.pth'.format(int(accuracy*100), epoch+1)
+        save_path += model_name
+
+        torch.save({
+            'epoch': epoch,
+            'model_state_dict': self.state_dict(),
+            'optimizer_state_dict': optimizer.state_dict(),
+            'criterion_state_dict': criterion.state_dict(),
+            }, save_path)
+        
         
     

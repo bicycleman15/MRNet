@@ -4,10 +4,11 @@ def _get_trainable_params(model):
     """Get Parameters with `requires.grad` set to `True`"""
     trainable_params = []
     for x in model.parameters():
-        trainable_params.append(x)
+        if x.requires_grad:
+            trainable_params.append(x)
     return trainable_params
 
-def _run_eval(model, validation_loader, criterion):
+def _run_eval(model, validation_loader, criterion, config : dict):
     """Runs model over val dataset and returns accuracy and avg val loss"""
 
     print('Running Validation of Model...')
@@ -17,7 +18,7 @@ def _run_eval(model, validation_loader, criterion):
     correct_cases = 0
     validation_loss = 0.0
 
-    i = 0
+    batch_iter = 0
     for images, label in validation_loader:
 
         images = [x.cuda() for x in images]
@@ -35,18 +36,19 @@ def _run_eval(model, validation_loader, criterion):
                 correct_cases += 1
             
             validation_loss += loss.item()
+
+            # TODO : Log current val loss somewhere ?
             
-            print('Validation Loss is {} at iter {}/{}'.format(loss.item(), i, len(validation_loader)))
+            if batch_iter % config['val_log_interval'] == 0:
+                print('Validation Loss is {:.4f} at iter {}/{}'.format(loss.item(), batch_iter+1, len(validation_loader)))
             
         
-        i += 1
+        batch_iter += 1
 
     # Calculate accuracy
     accuracy = float(correct_cases) / len(validation_loader)
 
     # Calculate Loss per patient
     average_val_loss = validation_loss / len(validation_loader)
-
-    print('Accuracy is {}'.format(accuracy))
 
     return average_val_loss, accuracy
