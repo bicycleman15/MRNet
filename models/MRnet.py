@@ -35,16 +35,16 @@ class MRnet(nn.Module):
         image2 = self.coronal(images[1]).view(-1,2048)
         image3 = self.saggital(images[2]).view(-1,2048)
 
-        image1 = torch.max(image1,dim=0,keepdim=True)[0].squeeze(dim=0)
-        image2 = torch.max(image2,dim=0,keepdim=True)[0].squeeze(dim=0)
-        image3 = torch.max(image3,dim=0,keepdim=True)[0].squeeze(dim=0)
+        image1 = torch.max(image1,dim=0,keepdim=True)[0]
+        image2 = torch.max(image2,dim=0,keepdim=True)[0]
+        image3 = torch.max(image3,dim=0,keepdim=True)[0]
 
-        output = torch.cat([image1,image2,image3])
+        output = torch.cat([image1,image2,image3], dim=1)
 
         output = self.fc(output)
 
-        # # no need to take softmax here
-        # # as cross_entropy loss combines both softmax and NLL loss
+        # no need to take softmax here
+        # as cross_entropy loss combines both softmax and NLL loss
         return output
     
     def _generate_resnet(self):
@@ -68,8 +68,20 @@ class MRnet(nn.Module):
         """load pretrained weights"""
         pass
 
-    def _save_model(self):
+    def _save_model(self, criterion, optimizer, accuracy, config, epoch):
         """Dump the model weights to `cfg['weights']` dir"""
-        pass
+        print('Saving Best Accuracy Model with score {:.3f} at epoch {}'.format(accuracy, epoch+1))
+        
+        save_path = config['weights_path'] 
+        model_name = 'MRnet_{}_{}.pth'.format(int(accuracy*100), epoch+1)
+        save_path += model_name
+
+        torch.save({
+            'epoch': epoch,
+            'model_state_dict': self.state_dict(),
+            'optimizer_state_dict': optimizer.state_dict(),
+            'criterion_state_dict': criterion.state_dict(),
+            }, save_path)
+        
         
     

@@ -75,24 +75,21 @@ class MRData():
         
         for plane in self.planes:
             img_raw[plane] = np.load(self.paths[plane][index])
-            # print(img_raw[plane].shape)
-            new=[]
-            for i in range(img_raw[plane].shape[0]):
-                intermediate=cv2.resize(img_raw[plane][i],(224,224), interpolation=cv2.INTER_AREA)
-                intermediate2=np.zeros((224,224))
-                intermediate2=cv2.normalize(intermediate, None, alpha=0, beta=1, norm_type=cv2.NORM_MINMAX, dtype=cv2.CV_32F)
-                new.append(intermediate2)
+
+            # array to collect new resized images
+            new = []
             
-            img_raw[plane]=np.array(new)
-                
+            for i in range(img_raw[plane].shape[0]):
+                inter = cv2.resize(img_raw[plane][i],(224,224), interpolation=cv2.INTER_AREA)
+                inter_ = np.zeros((224,224))
+                inter_ = cv2.normalize(inter, None, alpha=0, beta=1, norm_type=cv2.NORM_MINMAX, dtype=cv2.CV_32F)
+                new.append(inter_)
+
+            
+            img_raw[plane]=np.array(new)   
             
         label = self.labels[index]
-        if(label==1):
-            label=torch.FloatTensor([0,1])
-        else:
-            label=torch.FloatTensor([1,0])
-
-
+        
         # apply transforms if possible, or else stack 3 images together
         # Note : if applying any transformation, use 3 to generate 3 images
         # but they should be almost similar to each other
